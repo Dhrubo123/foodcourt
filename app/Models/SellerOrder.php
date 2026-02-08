@@ -19,6 +19,7 @@ class SellerOrder extends Model
         'total_after_discount',
         'offer_id',
         'seller_status',
+        'cancel_reason',
         'prep_time_minutes',
         'accepted_at',
         'ready_at',

@@ -116,6 +116,7 @@
                 </tr>
             </tbody>
         </table>
+
         <table class="table">
             <thead>
                 <tr>
@@ -135,6 +136,7 @@
                 </tr>
             </tbody>
         </table>
+
         <table class="table">
             <thead>
                 <tr>
@@ -211,6 +213,60 @@
     </div>
 
     <div class="card">
+        <div class="section-title">Top Items</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty Sold</th>
+                    <th>Total Amount</th>
+                    <th>Seller Orders</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="row in topItems" :key="`${row.product_id}-${row.product_name_snapshot}`">
+                    <td>{{ row.product_name_snapshot }}</td>
+                    <td>{{ row.total_qty }}</td>
+                    <td>BDT {{ money(row.total_amount) }}</td>
+                    <td>{{ row.seller_orders }}</td>
+                </tr>
+                <tr v-if="topItems.length === 0">
+                    <td colspan="4">No top item data</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Cancelled Orders</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order</th>
+                    <th>Seller</th>
+                    <th>Token</th>
+                    <th>Reason</th>
+                    <th>Amount</th>
+                    <th>Cancelled At</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="row in cancelledOrders" :key="row.seller_order_id">
+                    <td>#{{ row.order_id }}</td>
+                    <td>{{ row.seller_name }} ({{ row.seller_type }})</td>
+                    <td>{{ row.pickup_token }}</td>
+                    <td>{{ row.cancel_reason || '-' }}</td>
+                    <td>BDT {{ money(row.total_after_discount) }}</td>
+                    <td>{{ shortDate(row.cancelled_at || row.created_at) }}</td>
+                </tr>
+                <tr v-if="cancelledOrders.length === 0">
+                    <td colspan="6">No cancelled orders in this range</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
         <div class="section-title">Orders Report</div>
         <table class="table">
             <thead>
@@ -269,6 +325,8 @@ const paymentMethodBreakdown = ref([]);
 const settlements = ref([]);
 const settlementTotals = ref({});
 const settlementCommission = ref(10);
+const topItems = ref([]);
+const cancelledOrders = ref([]);
 
 const baseParams = () => ({
     from: filters.value.from || undefined,
@@ -311,7 +369,7 @@ const fetchAll = async () => {
     try {
         const params = baseParams();
 
-        const [ordersRes, salesRes, settlementsRes] = await Promise.all([
+        const [ordersRes, salesRes, settlementsRes, topItemsRes, cancelledOrdersRes] = await Promise.all([
             api.get('/admin/reports/orders', { params: { ...params, per_page: 20 } }),
             api.get('/admin/reports/sales-summary', { params }),
             api.get('/admin/reports/seller-settlements', {
@@ -320,6 +378,8 @@ const fetchAll = async () => {
                     commission_percent: filters.value.commission_percent ?? 10,
                 },
             }),
+            api.get('/admin/reports/top-items', { params: { ...params, limit: 20 } }),
+            api.get('/admin/reports/cancelled-orders', { params: { ...params, per_page: 20 } }),
         ]);
 
         orders.value = ordersRes.data?.data || [];
@@ -330,6 +390,8 @@ const fetchAll = async () => {
         settlements.value = settlementsRes.data?.rows || [];
         settlementTotals.value = settlementsRes.data?.totals || {};
         settlementCommission.value = settlementsRes.data?.commission_percent ?? 10;
+        topItems.value = topItemsRes.data?.rows || [];
+        cancelledOrders.value = cancelledOrdersRes.data?.data || [];
     } catch (err) {
         error.value = extractErrorMessage(err, 'Failed to load reports.');
     } finally {

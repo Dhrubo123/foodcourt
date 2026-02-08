@@ -14,7 +14,24 @@ class SellerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Seller::query()->with(['owner', 'area']);
+        $query = Seller::query()
+            ->with([
+                'owner:id,name,email,phone,status',
+                'area:id,name',
+                'activeSubscription.plan:id,name,price,duration_days',
+                'latestSubscription.plan:id,name,price,duration_days',
+            ])
+            ->withCount([
+                'sellerOrders as total_orders_count',
+                'sellerOrders as delivered_orders_count' => function ($builder) {
+                    $builder->where('seller_status', 'delivered');
+                },
+            ])
+            ->withSum([
+                'sellerOrders as delivered_revenue' => function ($builder) {
+                    $builder->where('seller_status', 'delivered');
+                },
+            ], 'total_after_discount');
 
         $query->when($request->filled('type'), function ($builder) use ($request) {
             $builder->where('type', $request->string('type'));
@@ -34,7 +51,25 @@ class SellerController extends Controller
 
         $query->when($request->filled('search'), function ($builder) use ($request) {
             $search = '%' . $request->string('search') . '%';
-            $builder->where('name', 'like', $search);
+            $builder->where(function ($searchBuilder) use ($search) {
+                $searchBuilder->where('name', 'like', $search)
+                    ->orWhere('phone', 'like', $search)
+                    ->orWhereHas('owner', function ($ownerQuery) use ($search) {
+                        $ownerQuery->where('name', 'like', $search)
+                            ->orWhere('email', 'like', $search)
+                            ->orWhere('phone', 'like', $search);
+                    });
+            });
+        });
+
+        $query->when($request->filled('subscription_status'), function ($builder) use ($request) {
+            $status = $request->string('subscription_status');
+            if ($status === 'active') {
+                $builder->whereHas('activeSubscription');
+            }
+            if ($status === 'inactive') {
+                $builder->whereDoesntHave('activeSubscription');
+            }
         });
 
         return $query->orderByDesc('id')->paginate(20);
@@ -89,7 +124,43 @@ class SellerController extends Controller
             ]);
         });
 
-        return response()->json(['seller' => $seller->load('owner', 'area')], 201);
+        return response()->json([
+            'seller' => $seller->load([
+                'owner:id,name,email,phone,status',
+                'area:id,name',
+                'activeSubscription.plan:id,name,price,duration_days',
+                'latestSubscription.plan:id,name,price,duration_days',
+            ]),
+        ], 201);
+    }
+
+    public function update(Request $request, Seller $seller)
+    {
+        $data = $request->validate([
+            'type' => ['sometimes', 'in:cart,food_court'],
+            'name' => ['sometimes', 'string', 'max:150'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'area_id' => ['nullable', 'integer', 'exists:areas,id'],
+            'lat' => ['nullable', 'numeric'],
+            'lng' => ['nullable', 'numeric'],
+            'open_time' => ['nullable', 'date_format:H:i'],
+            'close_time' => ['nullable', 'date_format:H:i'],
+            'is_open' => ['sometimes', 'boolean'],
+            'is_approved' => ['sometimes', 'boolean'],
+            'is_blocked' => ['sometimes', 'boolean'],
+        ]);
+
+        $seller->update($data);
+
+        return response()->json([
+            'seller' => $seller->fresh()->load([
+                'owner:id,name,email,phone,status',
+                'area:id,name',
+                'activeSubscription.plan:id,name,price,duration_days',
+                'latestSubscription.plan:id,name,price,duration_days',
+            ]),
+        ]);
     }
 
     public function approve(Request $request, Seller $seller)

@@ -13,6 +13,14 @@
             <div class="card-value">{{ stats.today_orders }}</div>
         </div>
         <div class="card">
+            <div class="card-title">Pending Orders</div>
+            <div class="card-value">{{ stats.pending_orders }}</div>
+        </div>
+        <div class="card">
+            <div class="card-title">Today Revenue</div>
+            <div class="card-value">BDT {{ money(stats.daily_revenue) }}</div>
+        </div>
+        <div class="card">
             <div class="card-title">Monthly Revenue</div>
             <div class="card-value">BDT {{ money(stats.monthly_revenue) }}</div>
         </div>
@@ -44,6 +52,28 @@
             </tbody>
         </table>
     </div>
+
+    <div class="card">
+        <div class="section-title">Top Items (Last 30 Days)</div>
+        <div v-if="loading" class="login-subtitle">Loading items...</div>
+        <div v-else-if="stats.top_items.length === 0" class="login-subtitle">No top items yet.</div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty Sold</th>
+                    <th>Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="item in stats.top_items" :key="item.product_id">
+                    <td>{{ item.product_name_snapshot }}</td>
+                    <td>{{ item.total_qty }}</td>
+                    <td>BDT {{ money(item.total_revenue) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </template>
 
 <script setup>
@@ -56,7 +86,10 @@ const stats = ref({
     active_sellers: 0,
     pending_approvals: 0,
     today_orders: 0,
+    pending_orders: 0,
+    daily_revenue: 0,
     monthly_revenue: 0,
+    top_items: [],
     recent_sellers: [],
 });
 

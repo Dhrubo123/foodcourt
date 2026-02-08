@@ -23,6 +23,7 @@ class Seller extends Model
         'is_approved',
         'is_blocked',
         'is_open',
+        'default_prep_time_minutes',
         'logo_path',
         'cover_path',
     ];
@@ -31,6 +32,7 @@ class Seller extends Model
         'is_approved' => 'boolean',
         'is_blocked' => 'boolean',
         'is_open' => 'boolean',
+        'default_prep_time_minutes' => 'integer',
         'lat' => 'float',
         'lng' => 'float',
     ];
@@ -68,6 +70,11 @@ class Seller extends Model
             ->latest('end_at');
     }
 
+    public function latestSubscription()
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany('end_at');
+    }
+
     public function offers()
     {
         return $this->hasMany(Offer::class);
@@ -81,6 +88,11 @@ class Seller extends Model
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function settlements()
+    {
+        return $this->hasMany(SellerSettlement::class);
     }
 
     public function scopeVisible($query)

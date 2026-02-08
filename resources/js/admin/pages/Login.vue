@@ -46,9 +46,26 @@ const submit = async () => {
         auth.setToken(response.data.token);
         auth.setUser(response.data.user);
 
+        const isOnAdminApp = window.location.pathname.startsWith('/admin');
+        const isOnSellerApp = window.location.pathname.startsWith('/seller');
+
         if (auth.hasAnyRole(['seller_owner', 'vendor'])) {
-            router.push({ name: 'seller.menu' });
+            if (isOnAdminApp) {
+                window.location.href = '/seller/dashboard';
+                return;
+            }
+
+            if (router.hasRoute('seller.dashboard')) {
+                router.push({ name: 'seller.dashboard' });
+            } else {
+                router.push({ name: 'seller.menu' });
+            }
         } else {
+            if (isOnSellerApp) {
+                window.location.href = '/admin/dashboard';
+                return;
+            }
+
             router.push({ name: 'dashboard' });
         }
     } catch (err) {

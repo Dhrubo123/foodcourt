@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Seller;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -45,6 +46,8 @@ class ReportController extends Controller
                 's.type as seller_type',
                 'o.order_status as parent_status',
                 'so.seller_status',
+                'so.cancel_reason',
+                'so.pickup_token',
                 'o.payment_status',
                 'so.subtotal',
                 'so.discount_amount',
@@ -133,7 +136,7 @@ class ReportController extends Controller
             'commission_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
-        $commissionPercent = (float) ($filters['commission_percent'] ?? 10);
+        $commissionPercent = (float) ($filters['commission_percent'] ?? SystemSetting::getValue('commission_percent', 10));
 
         $base = $this->filteredSellerOrdersQuery($filters);
 
@@ -181,6 +184,107 @@ class ReportController extends Controller
             'totals' => $totals,
             'rows' => $rows,
         ]);
+    }
+
+    public function topItems(Request $request)
+    {
+        $filters = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+            'seller_id' => ['nullable', 'integer', 'exists:sellers,id'],
+            'seller_type' => ['nullable', 'in:cart,food_court'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $limit = $filters['limit'] ?? 20;
+
+        $query = DB::table('order_items as oi')
+            ->join('seller_orders as so', 'so.id', '=', 'oi.seller_order_id')
+            ->join('orders as o', 'o.id', '=', 'so.order_id')
+            ->join('sellers as s', 's.id', '=', 'so.seller_id')
+            ->where('so.seller_status', 'delivered')
+            ->select([
+                'oi.product_id',
+                'oi.product_name_snapshot',
+            ])
+            ->selectRaw('SUM(oi.qty) as total_qty')
+            ->selectRaw('SUM(oi.line_total) as total_amount')
+            ->selectRaw('COUNT(DISTINCT so.id) as seller_orders');
+
+        if (! empty($filters['from'])) {
+            $query->whereDate('so.created_at', '>=', $filters['from']);
+        }
+
+        if (! empty($filters['to'])) {
+            $query->whereDate('so.created_at', '<=', $filters['to']);
+        }
+
+        if (! empty($filters['seller_id'])) {
+            $query->where('so.seller_id', $filters['seller_id']);
+        }
+
+        if (! empty($filters['seller_type'])) {
+            $query->where('s.type', $filters['seller_type']);
+        }
+
+        $rows = $query
+            ->groupBy('oi.product_id', 'oi.product_name_snapshot')
+            ->orderByDesc('total_qty')
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'rows' => $rows,
+        ]);
+    }
+
+    public function cancelledOrders(Request $request)
+    {
+        $filters = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+            'seller_id' => ['nullable', 'integer', 'exists:sellers,id'],
+            'seller_type' => ['nullable', 'in:cart,food_court'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $query = DB::table('seller_orders as so')
+            ->join('orders as o', 'o.id', '=', 'so.order_id')
+            ->join('sellers as s', 's.id', '=', 'so.seller_id')
+            ->where('so.seller_status', 'cancelled')
+            ->select([
+                'so.id as seller_order_id',
+                'so.order_id',
+                'so.seller_id',
+                's.name as seller_name',
+                's.type as seller_type',
+                'so.pickup_token',
+                'so.cancel_reason',
+                'so.total_after_discount',
+                'o.payment_status',
+                'so.created_at',
+                'so.cancelled_at',
+            ]);
+
+        if (! empty($filters['from'])) {
+            $query->whereDate('so.created_at', '>=', $filters['from']);
+        }
+
+        if (! empty($filters['to'])) {
+            $query->whereDate('so.created_at', '<=', $filters['to']);
+        }
+
+        if (! empty($filters['seller_id'])) {
+            $query->where('so.seller_id', $filters['seller_id']);
+        }
+
+        if (! empty($filters['seller_type'])) {
+            $query->where('s.type', $filters['seller_type']);
+        }
+
+        $perPage = $filters['per_page'] ?? 20;
+
+        return $query->orderByDesc('so.id')->paginate($perPage);
     }
 
     private function filteredSellerOrdersQuery(array $filters)

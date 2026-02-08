@@ -24,3 +24,7 @@ Route::post('/register-seller', [SellerRegistrationController::class, 'store']);
 Route::get('/admin/{any?}', function () {
     return view('admin');
 })->where('any', '.*');
+
+Route::get('/seller/{any?}', function () {
+    return view('seller');
+})->where('any', '.*');

@@ -262,6 +262,21 @@ body {
 .actions-cell {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.actions-cell select,
+.actions-cell input {
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border);
+    background: #fff;
+    font-size: 13px;
+}
+
+.table .login-subtitle {
+    margin: 4px 0 0;
 }
 
 .thumb {
