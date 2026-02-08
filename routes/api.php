@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Admin\CustomerController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\FoodCourtReportController;
 use App\Http\Controllers\Api\Admin\OfferController;
+use App\Http\Controllers\Api\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Api\Admin\SellerController;
 use App\Http\Controllers\Api\Admin\SellerSettlementController;
 use App\Http\Controllers\Api\Admin\SettingController;
@@ -59,6 +60,7 @@ Route::middleware(['auth:sanctum', 'role:super_admin,sanctum'])->prefix('admin')
     Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
     Route::patch('/orders/{order}/payment-status', [OrderController::class, 'updatePaymentStatus']);
     Route::patch('/seller-orders/{sellerOrder}/status', [OrderController::class, 'updateSellerOrderStatus']);
+    Route::get('/menu-items', [AdminProductController::class, 'index']);
 
     Route::get('/sellers', [SellerController::class, 'index']);
     Route::post('/sellers', [SellerController::class, 'store']);

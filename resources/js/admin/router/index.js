@@ -4,6 +4,7 @@ import Login from '../pages/Login.vue';
 import Dashboard from '../pages/Dashboard.vue';
 import Sellers from '../pages/Sellers.vue';
 import Orders from '../pages/Orders.vue';
+import MenuView from '../pages/MenuView.vue';
 import Plans from '../pages/Plans.vue';
 import Subscriptions from '../pages/Subscriptions.vue';
 import Offers from '../pages/Offers.vue';
@@ -14,13 +15,6 @@ import Reviews from '../pages/Reviews.vue';
 import Customers from '../pages/Customers.vue';
 import Settlements from '../pages/Settlements.vue';
 import Settings from '../pages/Settings.vue';
-import SellerDashboard from '../pages/SellerDashboard.vue';
-import SellerOrders from '../pages/SellerOrders.vue';
-import SellerMenu from '../pages/SellerMenu.vue';
-import SellerAccounts from '../pages/SellerAccounts.vue';
-import SellerReviews from '../pages/SellerReviews.vue';
-import SellerSubscription from '../pages/SellerSubscription.vue';
-import SellerProfile from '../pages/SellerProfile.vue';
 
 const router = createRouter({
     history: createWebHistory('/admin'),
@@ -30,6 +24,7 @@ const router = createRouter({
         { path: '/dashboard', name: 'dashboard', component: Dashboard, meta: { requiresAuth: true, roles: ['super_admin'] } },
         { path: '/sellers', name: 'sellers', component: Sellers, meta: { requiresAuth: true, roles: ['super_admin'] } },
         { path: '/orders', name: 'orders', component: Orders, meta: { requiresAuth: true, roles: ['super_admin'] } },
+        { path: '/menu-view', name: 'menu.view', component: MenuView, meta: { requiresAuth: true, roles: ['super_admin'] } },
         { path: '/plans', name: 'plans', component: Plans, meta: { requiresAuth: true, roles: ['super_admin'] } },
         { path: '/subscriptions', name: 'subscriptions', component: Subscriptions, meta: { requiresAuth: true, roles: ['super_admin'] } },
         { path: '/offers', name: 'offers', component: Offers, meta: { requiresAuth: true, roles: ['super_admin'] } },
@@ -40,13 +35,6 @@ const router = createRouter({
         { path: '/customers', name: 'customers', component: Customers, meta: { requiresAuth: true, roles: ['super_admin'] } },
         { path: '/settlements', name: 'settlements', component: Settlements, meta: { requiresAuth: true, roles: ['super_admin'] } },
         { path: '/settings', name: 'settings', component: Settings, meta: { requiresAuth: true, roles: ['super_admin'] } },
-        { path: '/seller/dashboard', name: 'seller.dashboard', component: SellerDashboard, meta: { requiresAuth: true, roles: ['seller_owner', 'vendor'] } },
-        { path: '/seller/orders', name: 'seller.orders', component: SellerOrders, meta: { requiresAuth: true, roles: ['seller_owner', 'vendor'] } },
-        { path: '/seller/menu', name: 'seller.menu', component: SellerMenu, meta: { requiresAuth: true, roles: ['seller_owner', 'vendor'] } },
-        { path: '/seller/accounts', name: 'seller.accounts', component: SellerAccounts, meta: { requiresAuth: true, roles: ['seller_owner', 'vendor'] } },
-        { path: '/seller/reviews', name: 'seller.reviews', component: SellerReviews, meta: { requiresAuth: true, roles: ['seller_owner', 'vendor'] } },
-        { path: '/seller/subscription', name: 'seller.subscription', component: SellerSubscription, meta: { requiresAuth: true, roles: ['seller_owner', 'vendor'] } },
-        { path: '/seller/profile', name: 'seller.profile', component: SellerProfile, meta: { requiresAuth: true, roles: ['seller_owner', 'vendor'] } },
     ],
 });
 
@@ -62,8 +50,11 @@ router.beforeEach(async (to) => {
     }
 
     if (to.meta.roles && !auth.hasAnyRole(to.meta.roles)) {
-        auth.logout();
-        return { name: 'login' };
+        if (auth.hasAnyRole(['seller_owner', 'vendor'])) {
+            window.location.href = '/seller/dashboard';
+            return false;
+        }
+        return { name: 'dashboard' };
     }
 
     if (to.meta.guest && auth.isAuthenticated) {

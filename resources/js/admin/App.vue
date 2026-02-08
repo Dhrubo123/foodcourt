@@ -13,6 +13,7 @@
                     <RouterLink :to="{ name: 'dashboard' }" class="nav-link">Dashboard</RouterLink>
                     <RouterLink :to="{ name: 'sellers' }" class="nav-link">Sellers</RouterLink>
                     <RouterLink :to="{ name: 'orders' }" class="nav-link">Orders</RouterLink>
+                    <RouterLink :to="{ name: 'menu.view' }" class="nav-link">Menu View</RouterLink>
                     <RouterLink :to="{ name: 'plans' }" class="nav-link">Plans</RouterLink>
                     <RouterLink :to="{ name: 'subscriptions' }" class="nav-link">Subscriptions</RouterLink>
                     <RouterLink :to="{ name: 'offers' }" class="nav-link">Offers</RouterLink>
@@ -74,6 +75,7 @@ const pageTitle = computed(() => {
     if (route.name === 'dashboard') return 'Dashboard Overview';
     if (route.name === 'sellers') return 'Seller Management';
     if (route.name === 'orders') return 'Orders Overview';
+    if (route.name === 'menu.view') return 'Seller Menu View';
     if (route.name === 'plans') return 'Subscription Plans';
     if (route.name === 'subscriptions') return 'Seller Subscriptions';
     if (route.name === 'offers') return 'Offers & Coupons';
