@@ -12,6 +12,7 @@
             <thead>
                 <tr>
                     <th>Title</th>
+                    <th>Image</th>
                     <th>Status</th>
                     <th>Order</th>
                     <th>Schedule</th>
@@ -21,6 +22,10 @@
             <tbody>
                 <tr v-for="banner in banners" :key="banner.id">
                     <td>{{ banner.title }}</td>
+                    <td>
+                        <img v-if="banner.image_path" :src="banner.image_path" class="thumb" alt="Banner" />
+                        <span v-else>-</span>
+                    </td>
                     <td>{{ banner.is_active ? 'Active' : 'Inactive' }}</td>
                     <td>{{ banner.sort_order }}</td>
                     <td>{{ formatSchedule(banner) }}</td>
@@ -46,8 +51,16 @@
                         <input v-model="form.subtitle" type="text" />
                     </div>
                     <div class="field">
-                        <label>Image URL</label>
+                        <label>Image URL (optional)</label>
                         <input v-model="form.image_path" type="text" />
+                    </div>
+                    <div class="field">
+                        <label>Upload Banner (1920x800)</label>
+                        <input type="file" accept="image/png,image/jpeg,image/webp" @change="onImageChange" />
+                    </div>
+                    <div v-if="form.current_image_path" class="field">
+                        <label>Current Image</label>
+                        <img :src="form.current_image_path" class="banner-preview" alt="Current banner" />
                     </div>
                     <div class="field">
                         <label>CTA Label</label>
@@ -102,11 +115,13 @@ const formError = ref('');
 const banners = ref([]);
 const showModal = ref(false);
 const editingId = ref(null);
+const imageFile = ref(null);
 
 const form = ref({
     title: '',
     subtitle: '',
     image_path: '',
+    current_image_path: '',
     cta_label: '',
     cta_link: '',
     sort_order: 0,
@@ -120,6 +135,7 @@ const resetForm = () => {
         title: '',
         subtitle: '',
         image_path: '',
+        current_image_path: '',
         cta_label: '',
         cta_link: '',
         sort_order: 0,
@@ -127,6 +143,7 @@ const resetForm = () => {
         end_at: '',
         is_active: true,
     };
+    imageFile.value = null;
     formError.value = '';
 };
 
@@ -168,6 +185,7 @@ const openEdit = (banner) => {
         title: banner.title || '',
         subtitle: banner.subtitle || '',
         image_path: banner.image_path || '',
+        current_image_path: banner.image_path || '',
         cta_label: banner.cta_label || '',
         cta_link: banner.cta_link || '',
         sort_order: banner.sort_order ?? 0,
@@ -176,6 +194,11 @@ const openEdit = (banner) => {
         is_active: Boolean(banner.is_active),
     };
     showModal.value = true;
+};
+
+const onImageChange = (event) => {
+    const files = event?.target?.files;
+    imageFile.value = files && files.length ? files[0] : null;
 };
 
 const close = () => {
@@ -188,18 +211,58 @@ const submit = async () => {
     saving.value = true;
     formError.value = '';
     try {
+        const payload = new FormData();
+        payload.append('title', form.value.title || '');
+        payload.append('subtitle', form.value.subtitle || '');
+        payload.append('image_path', form.value.image_path || '');
+        payload.append('cta_label', form.value.cta_label || '');
+        payload.append('cta_link', form.value.cta_link || '');
+        payload.append('sort_order', String(form.value.sort_order ?? 0));
+        payload.append('is_active', form.value.is_active ? '1' : '0');
+        if (form.value.start_at) {
+            payload.append('start_at', form.value.start_at);
+        }
+        if (form.value.end_at) {
+            payload.append('end_at', form.value.end_at);
+        }
+        if (imageFile.value) {
+            payload.append('image', imageFile.value);
+        }
+
         if (editingId.value) {
-            await api.patch(`/admin/banners/${editingId.value}`, form.value);
+            payload.append('_method', 'PATCH');
+            await api.post(`/admin/banners/${editingId.value}`, payload, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
         } else {
-            await api.post('/admin/banners', form.value);
+            await api.post('/admin/banners', payload, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
         }
         close();
         await fetchBanners();
     } catch (err) {
-        formError.value = err?.response?.data?.message || 'Failed to save banner.';
+        formError.value = extractErrorMessage(err, 'Failed to save banner.');
     } finally {
         saving.value = false;
     }
+};
+
+const extractErrorMessage = (err, fallback) => {
+    const responseData = err?.response?.data;
+    if (responseData?.message) {
+        return responseData.message;
+    }
+
+    const validation = responseData?.errors;
+    if (validation && typeof validation === 'object') {
+        const firstGroup = Object.values(validation)[0];
+        if (Array.isArray(firstGroup) && firstGroup[0]) {
+            return firstGroup[0];
+        }
+    }
+
+    return fallback;
 };
 
 onMounted(fetchBanners);

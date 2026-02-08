@@ -66,7 +66,7 @@
             </article>
         </section>
 
-        <section class="campaign" :class="activeCampaign.theme">
+        <section class="campaign" :class="activeCampaign.theme" :style="campaignStyle">
             <div class="campaign-copy">
                 <p class="campaign-label">Campaign</p>
                 <h2>{{ activeCampaign.title }}</h2>
@@ -317,11 +317,24 @@ const campaigns = computed(() => {
         description: banner.subtitle || 'Explore latest food marketplace campaign offers.',
         cta: banner.cta_label || 'Explore Now',
         link: banner.cta_link || '#sellers',
+        image: banner.image_path || null,
         theme: index % 3 === 0 ? 'theme-mint' : index % 3 === 1 ? 'theme-leaf' : 'theme-emerald',
     }));
 });
 
 const activeCampaign = computed(() => campaigns.value[currentCampaignIndex.value]);
+
+const campaignStyle = computed(() => {
+    if (!activeCampaign.value?.image) {
+        return {};
+    }
+
+    return {
+        backgroundImage: `linear-gradient(120deg, rgba(226, 244, 229, 0.93) 0%, rgba(248, 255, 249, 0.88) 100%), url('${activeCampaign.value.image}')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+    };
+});
 
 const setCampaign = (index) => {
     currentCampaignIndex.value = index;

@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\BannerController;
+use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\FoodCourtReportController;
 use App\Http\Controllers\Api\Admin\SellerController;
 use App\Http\Controllers\Api\Admin\OrderController;
+use App\Http\Controllers\Api\Admin\ReportController;
 use App\Http\Controllers\Api\Admin\ReviewController;
 use App\Http\Controllers\Api\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Api\CustomerReviewController;
@@ -41,6 +43,7 @@ Route::middleware(['auth:sanctum', 'role:customer,sanctum'])->group(function () 
 });
 
 Route::middleware(['auth:sanctum', 'role:super_admin,sanctum'])->prefix('admin')->group(function () {
+    Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
     Route::get('/orders', [OrderController::class, 'index']);
 
     Route::get('/sellers', [SellerController::class, 'index']);
@@ -62,6 +65,10 @@ Route::middleware(['auth:sanctum', 'role:super_admin,sanctum'])->prefix('admin')
     Route::patch('/reviews/{review}/visibility', [ReviewController::class, 'updateVisibility']);
 
     Route::get('/reports/food-courts', [FoodCourtReportController::class, 'index']);
+    Route::get('/reports/meta', [ReportController::class, 'meta']);
+    Route::get('/reports/orders', [ReportController::class, 'orders']);
+    Route::get('/reports/sales-summary', [ReportController::class, 'salesSummary']);
+    Route::get('/reports/seller-settlements', [ReportController::class, 'sellerSettlements']);
 });
 
 Route::middleware(['auth:sanctum', 'role:seller_owner|vendor,sanctum'])->prefix('seller')->group(function () {

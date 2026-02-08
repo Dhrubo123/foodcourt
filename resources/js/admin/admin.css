@@ -264,6 +264,22 @@ body {
     gap: 8px;
 }
 
+.thumb {
+    width: 120px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--panel-border);
+}
+
+.banner-preview {
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border);
+}
+
 .ghost {
     border: none;
     background: transparent;

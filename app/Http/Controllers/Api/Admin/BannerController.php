@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BannerController extends Controller
 {
@@ -22,6 +23,7 @@ class BannerController extends Controller
             'title' => ['required', 'string', 'max:150'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'image_path' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096', 'dimensions:width=1920,height=800'],
             'cta_label' => ['nullable', 'string', 'max:80'],
             'cta_link' => ['nullable', 'string', 'max:255'],
             'is_active' => ['nullable', 'boolean'],
@@ -29,6 +31,12 @@ class BannerController extends Controller
             'start_at' => ['nullable', 'date'],
             'end_at' => ['nullable', 'date', 'after_or_equal:start_at'],
         ]);
+
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $this->storeImage($request);
+        }
+
+        unset($data['image']);
 
         $banner = Banner::create($data);
 
@@ -41,6 +49,7 @@ class BannerController extends Controller
             'title' => ['sometimes', 'string', 'max:150'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'image_path' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096', 'dimensions:width=1920,height=800'],
             'cta_label' => ['nullable', 'string', 'max:80'],
             'cta_link' => ['nullable', 'string', 'max:255'],
             'is_active' => ['sometimes', 'boolean'],
@@ -49,6 +58,13 @@ class BannerController extends Controller
             'end_at' => ['nullable', 'date', 'after_or_equal:start_at'],
         ]);
 
+        if ($request->hasFile('image')) {
+            $this->deleteLocalImage($banner->image_path);
+            $data['image_path'] = $this->storeImage($request);
+        }
+
+        unset($data['image']);
+
         $banner->update($data);
 
         return response()->json(['banner' => $banner]);
@@ -56,8 +72,32 @@ class BannerController extends Controller
 
     public function destroy(Banner $banner)
     {
+        $this->deleteLocalImage($banner->image_path);
         $banner->delete();
 
         return response()->json(['message' => 'Deleted.']);
+    }
+
+    private function storeImage(Request $request): string
+    {
+        $path = $request->file('image')->store('banners', 'public');
+        return Storage::disk('public')->url($path);
+    }
+
+    private function deleteLocalImage(?string $imagePath): void
+    {
+        if (! $imagePath) {
+            return;
+        }
+
+        if (! str_starts_with($imagePath, '/storage/')) {
+            return;
+        }
+
+        $relativePath = ltrim(str_replace('/storage/', '', $imagePath), '/');
+
+        if ($relativePath !== '') {
+            Storage::disk('public')->delete($relativePath);
+        }
     }
 }
