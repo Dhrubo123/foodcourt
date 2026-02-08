@@ -254,6 +254,16 @@ body {
     border: 1px solid var(--primary);
 }
 
+.pill.danger {
+    background: #d64045;
+    color: #fff;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
 .ghost {
     border: none;
     background: transparent;

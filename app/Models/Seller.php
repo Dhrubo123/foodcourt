@@ -78,6 +78,11 @@ class Seller extends Model
         return $this->hasMany(SellerOrder::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
     public function scopeVisible($query)
     {
         return $query

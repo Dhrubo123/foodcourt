@@ -21,6 +21,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'sellers.block',
             'plans.manage',
             'reports.view',
+            'reports.accounts.view',
+            'banners.manage',
+            'reviews.view',
             'menu.manage',
             'orders.manage.own',
             'subscriptions.view',
@@ -41,6 +44,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $sellerOwner->syncPermissions([
             'menu.manage',
             'orders.manage.own',
+            'reports.accounts.view',
             'subscriptions.view',
             'subscriptions.pay',
         ]);
@@ -48,6 +52,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $vendor->syncPermissions([
             'menu.manage',
             'orders.manage.own',
+            'reports.accounts.view',
         ]);
 
         $customer->syncPermissions([]);

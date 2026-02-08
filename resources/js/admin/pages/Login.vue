@@ -45,7 +45,12 @@ const submit = async () => {
         const response = await api.post('/auth/login', form.value);
         auth.setToken(response.data.token);
         auth.setUser(response.data.user);
-        router.push({ name: 'dashboard' });
+
+        if (auth.hasAnyRole(['seller_owner', 'vendor'])) {
+            router.push({ name: 'seller.menu' });
+        } else {
+            router.push({ name: 'dashboard' });
+        }
     } catch (err) {
         error.value = err?.response?.data?.message || 'Login failed.';
     } finally {

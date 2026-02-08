@@ -15,11 +15,13 @@ class Product extends Model
         'name',
         'description',
         'price',
+        'cost_price',
         'is_available',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'cost_price' => 'decimal:2',
         'is_available' => 'boolean',
     ];
 
@@ -31,5 +33,10 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItem::class);
     }
 }
