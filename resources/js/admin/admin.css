@@ -151,6 +151,16 @@ body {
     gap: 20px;
 }
 
+.app-credit {
+    margin-top: auto;
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px 8px;
+    letter-spacing: 0.04em;
+}
+
 .card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

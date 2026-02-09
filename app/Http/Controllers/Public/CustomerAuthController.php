@@ -1,24 +1,29 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
-class AuthController extends Controller
+class CustomerAuthController extends Controller
 {
-    public function registerCustomer(Request $request)
+    public function showRegister()
+    {
+        return view('customer-register');
+    }
+
+    public function register(Request $request)
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'email' => ['nullable', 'email', 'max:150', 'unique:users,email', 'required_without:phone'],
             'phone' => ['nullable', 'string', 'max:30', 'unique:users,phone', 'required_without:email'],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         $user = DB::transaction(function () use ($data) {
@@ -42,12 +47,15 @@ class AuthController extends Controller
             return $user;
         });
 
-        $token = $user->createToken('customer')->plainTextToken;
+        Auth::login($user);
+        $request->session()->regenerate();
 
-        return response()->json([
-            'token' => $token,
-            'user' => $this->userPayload($user),
-        ], 201);
+        return redirect()->route('customer.account');
+    }
+
+    public function showLogin()
+    {
+        return view('customer-login');
     }
 
     public function login(Request $request)
@@ -63,48 +71,50 @@ class AuthController extends Controller
             ->first();
 
         if (! $user || ! Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'login' => ['Invalid credentials.'],
-            ]);
+            return back()->withErrors([
+                'login' => 'Invalid credentials.',
+            ])->withInput();
         }
 
         if ($user->status !== 'active') {
-            return response()->json(['message' => 'Account is not active.'], 403);
+            return back()->withErrors([
+                'login' => 'Account is not active.',
+            ])->withInput();
         }
 
-        $token = $user->createToken('access')->plainTextToken;
+        if (! $user->hasRole('customer')) {
+            return back()->withErrors([
+                'login' => 'This login page is for customer accounts only.',
+            ])->withInput();
+        }
 
-        return response()->json([
-            'token' => $token,
-            'user' => $this->userPayload($user),
-        ]);
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route('customer.account');
     }
 
-    public function me(Request $request)
+    public function account(Request $request)
     {
         $user = $request->user();
+        if (! $user || ! $user->hasRole('customer')) {
+            Auth::logout();
 
-        return response()->json([
-            'user' => $this->userPayload($user),
+            return redirect()->route('customer.login');
+        }
+
+        return view('customer-account', [
+            'user' => $user,
         ]);
     }
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()?->delete();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        return response()->json(['message' => 'Logged out.']);
-    }
-
-    private function userPayload(User $user): array
-    {
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => $user->phone,
-            'status' => $user->status,
-            'roles' => $user->getRoleNames(),
-        ];
+        return redirect()->route('customer.login');
     }
 }
+

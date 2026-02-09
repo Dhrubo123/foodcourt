@@ -9,6 +9,7 @@
                 <a href="#categories">Categories</a>
                 <a href="#sellers">Sellers</a>
                 <a href="#menu">Menu</a>
+                <a href="/customer/login">Customer Login</a>
                 <a href="/register-seller">Become a Seller</a>
             </nav>
             <a class="btn solid" href="/admin">Admin</a>
@@ -207,6 +208,7 @@
                 <a href="#categories">Categories</a>
                 <a href="#sellers">Sellers</a>
                 <a href="#menu">Menu</a>
+                <a href="/customer/register">Customer Register</a>
                 <a href="/register-seller">Seller Registration</a>
             </div>
 
@@ -256,6 +258,10 @@
                         </svg>
                     </a>
                 </div>
+            </div>
+
+            <div class="footer-credit">
+                <h4>Developed by Aparup Barua</h4>
             </div>
         </footer>
     </div>
