@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Admin\SubscriptionController;
 use App\Http\Controllers\Api\Admin\SubscriptionPlanController;
 use App\Http\Controllers\Api\CustomerReviewController;
 use App\Http\Controllers\Api\Public\HomeController;
+use App\Http\Controllers\Api\Public\SellerDiscoveryController;
 use App\Http\Controllers\Api\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Api\Seller\CategoryController as SellerCategoryController;
 use App\Http\Controllers\Api\Seller\DashboardController as SellerDashboardController;
@@ -40,6 +41,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('auth')->group(function () {
+    Route::post('/register/customer', [AuthController::class, 'registerCustomer']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
@@ -49,6 +51,8 @@ Route::prefix('auth')->group(function () {
 
 Route::post('/sellers/register', [SellerRegistrationController::class, 'apiStore']);
 Route::get('/public/home', [HomeController::class, 'index']);
+Route::get('/public/areas', [SellerDiscoveryController::class, 'areas']);
+Route::get('/public/sellers/nearby', [SellerDiscoveryController::class, 'nearby']);
 
 Route::middleware(['auth:sanctum', 'role:customer,sanctum'])->group(function () {
     Route::post('/reviews', [CustomerReviewController::class, 'store']);

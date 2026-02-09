@@ -54,6 +54,7 @@
             <main class="content">
                 <RouterView />
             </main>
+            <footer v-if="!isGuest" class="app-credit">Developed by APARUP BARUA</footer>
         </div>
     </div>
 </template>

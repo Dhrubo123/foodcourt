@@ -30,6 +30,8 @@ class HomeController extends Controller
                     'type',
                     'address',
                     'area_id',
+                    'lat',
+                    'lng',
                     'open_time',
                     'close_time',
                     'logo_path',

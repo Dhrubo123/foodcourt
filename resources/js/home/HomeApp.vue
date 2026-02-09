@@ -9,9 +9,10 @@
                 <a href="#categories">Categories</a>
                 <a href="#sellers">Sellers</a>
                 <a href="#menu">Menu</a>
-                <a href="/register-seller">Become a Seller</a>
+                <a :href="links.customerLogin">Customer Login</a>
+                <a :href="links.sellerRegister">Become a Seller</a>
             </nav>
-            <a class="btn solid" href="/admin">Admin</a>
+            <a class="btn solid" :href="links.adminPanel">Admin</a>
         </header>
 
         <section class="hero">
@@ -174,7 +175,7 @@
                     <h2>Run a food cart or food court?</h2>
                     <p>Register in minutes and get listed after admin approval.</p>
                 </div>
-                <a class="btn solid" href="/register-seller">Register as Seller</a>
+                <a class="btn solid" :href="links.sellerRegister">Register as Seller</a>
             </section>
 
             <section class="section-card">
@@ -207,7 +208,8 @@
                 <a href="#categories">Categories</a>
                 <a href="#sellers">Sellers</a>
                 <a href="#menu">Menu</a>
-                <a href="/register-seller">Seller Registration</a>
+                <a :href="links.customerRegister">Customer Register</a>
+                <a :href="links.sellerRegister">Seller Registration</a>
             </div>
 
             <div class="footer-apps">
@@ -257,12 +259,27 @@
                     </a>
                 </div>
             </div>
+
+            <div class="footer-credit">
+                <h4>Developed by Aparup Barua</h4>
+            </div>
         </footer>
     </div>
 </template>
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+
+const backendBase = (import.meta.env.VITE_APP_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '');
+const withBackendBase = (path) => `${backendBase}${path.startsWith('/') ? path : `/${path}`}`;
+
+const defaultLinks = {
+    customerLogin: withBackendBase('/customer/login'),
+    customerRegister: withBackendBase('/customer/register'),
+    sellerRegister: withBackendBase('/register-seller'),
+    adminPanel: withBackendBase('/admin'),
+};
+const links = { ...defaultLinks, ...(window.__RESTAURENT_LINKS || {}) };
 
 const loading = ref(true);
 const featuredSellers = ref([]);
@@ -299,7 +316,7 @@ const fallbackCampaigns = [
         title: 'New Seller Onboarding',
         description: 'Launch your cart online and start receiving pre-confirmed pickup orders.',
         cta: 'Register Your Cart',
-        link: '/register-seller',
+        link: links.sellerRegister,
         theme: 'theme-emerald',
     },
 ];
