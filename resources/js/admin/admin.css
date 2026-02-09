@@ -297,6 +297,14 @@ body {
     border: 1px solid var(--panel-border);
 }
 
+.product-thumb {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border);
+}
+
 .banner-preview {
     width: 100%;
     max-width: 420px;

@@ -7,6 +7,7 @@ use App\Models\ProductCategory;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -37,6 +38,8 @@ class ProductController extends Controller
             'category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
             'name' => ['required', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
+            'image_path' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'price' => ['required', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
@@ -57,6 +60,7 @@ class ProductController extends Controller
         }
 
         $hasStockQuantityColumn = Schema::hasColumn('products', 'stock_quantity');
+        $hasImagePathColumn = Schema::hasColumn('products', 'image_path');
         $stockQuantity = (int) ($data['stock_quantity'] ?? 0);
 
         $payload = [
@@ -71,6 +75,13 @@ class ProductController extends Controller
 
         if ($hasStockQuantityColumn) {
             $payload['stock_quantity'] = $stockQuantity;
+        }
+
+        if ($hasImagePathColumn) {
+            $payload['image_path'] = $data['image_path'] ?? null;
+            if ($request->hasFile('image')) {
+                $payload['image_path'] = $this->storeImage($request);
+            }
         }
 
         $product = Product::create($payload);
@@ -90,6 +101,8 @@ class ProductController extends Controller
             'category_id' => ['nullable', 'integer', 'exists:product_categories,id'],
             'name' => ['sometimes', 'string', 'max:150'],
             'description' => ['nullable', 'string'],
+            'image_path' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'price' => ['sometimes', 'numeric', 'min:0'],
             'cost_price' => ['sometimes', 'numeric', 'min:0'],
             'stock_quantity' => ['sometimes', 'integer', 'min:0'],
@@ -110,6 +123,7 @@ class ProductController extends Controller
         }
 
         $hasStockQuantityColumn = Schema::hasColumn('products', 'stock_quantity');
+        $hasImagePathColumn = Schema::hasColumn('products', 'image_path');
 
         if (array_key_exists('stock_quantity', $data) && ! array_key_exists('is_available', $data)) {
             $data['is_available'] = (int) $data['stock_quantity'] > 0;
@@ -118,6 +132,20 @@ class ProductController extends Controller
         if (! $hasStockQuantityColumn) {
             unset($data['stock_quantity']);
         }
+
+        if (! $hasImagePathColumn) {
+            unset($data['image_path']);
+        } else {
+            if ($request->hasFile('image')) {
+                $this->deleteLocalImage($product->image_path);
+                $data['image_path'] = $this->storeImage($request);
+            } elseif (array_key_exists('image_path', $data) && ($data['image_path'] === null || $data['image_path'] === '')) {
+                $this->deleteLocalImage($product->image_path);
+                $data['image_path'] = null;
+            }
+        }
+
+        unset($data['image']);
 
         $product->update($data);
 
@@ -132,8 +160,27 @@ class ProductController extends Controller
             return response()->json(['message' => 'Unauthorized product access.'], 403);
         }
 
+        $this->deleteLocalImage($product->image_path);
         $product->delete();
 
         return response()->json(['message' => 'Deleted.']);
+    }
+
+    private function storeImage(Request $request): string
+    {
+        $path = $request->file('image')->store('products', 'public');
+        return Storage::disk('public')->url($path);
+    }
+
+    private function deleteLocalImage(?string $imagePath): void
+    {
+        if (! $imagePath || ! str_starts_with($imagePath, '/storage/')) {
+            return;
+        }
+
+        $relativePath = ltrim(str_replace('/storage/', '', $imagePath), '/');
+        if ($relativePath !== '') {
+            Storage::disk('public')->delete($relativePath);
+        }
     }
 }

@@ -55,6 +55,7 @@
         <table v-else class="table">
             <thead>
                 <tr>
+                    <th>Image</th>
                     <th>Name</th>
                     <th>Category</th>
                     <th>Price</th>
@@ -66,6 +67,10 @@
             </thead>
             <tbody>
                 <tr v-for="product in products" :key="product.id">
+                    <td>
+                        <img v-if="product.image_path" :src="product.image_path" class="product-thumb" :alt="product.name" />
+                        <span v-else>-</span>
+                    </td>
                     <td>{{ product.name }}</td>
                     <td>{{ product.category?.name || '-' }}</td>
                     <td>BDT {{ Number(product.price || 0).toFixed(2) }}</td>
@@ -114,6 +119,14 @@
                     <div class="field">
                         <label>Description</label>
                         <input v-model="productForm.description" type="text" />
+                    </div>
+                    <div class="field">
+                        <label>Menu Image</label>
+                        <input type="file" accept="image/png,image/jpeg,image/webp" @change="onImageChange" />
+                    </div>
+                    <div v-if="productForm.image_path" class="field">
+                        <label>Current Image</label>
+                        <img :src="productForm.image_path" class="banner-preview" alt="Current menu image" />
                     </div>
                     <div class="field">
                         <label>Price</label>
@@ -188,6 +201,7 @@ const formError = ref('');
 
 const products = ref([]);
 const categories = ref([]);
+const imageFile = ref(null);
 
 const showProductModal = ref(false);
 const showCategoryModal = ref(false);
@@ -199,6 +213,7 @@ const productForm = ref({
     category_id: null,
     name: '',
     description: '',
+    image_path: '',
     price: 0,
     cost_price: 0,
     stock_quantity: 0,
@@ -244,11 +259,13 @@ const resetProductForm = () => {
         category_id: null,
         name: '',
         description: '',
+        image_path: '',
         price: 0,
         cost_price: 0,
         stock_quantity: 0,
         is_available: true,
     };
+    imageFile.value = null;
     formError.value = '';
 };
 
@@ -297,11 +314,13 @@ const openEdit = (product) => {
         category_id: product.category_id || null,
         name: product.name || '',
         description: product.description || '',
+        image_path: product.image_path || '',
         price: Number(product.price || 0),
         cost_price: Number(product.cost_price || 0),
         stock_quantity: Number(product.stock_quantity || 0),
         is_available: Boolean(product.is_available),
     };
+    imageFile.value = null;
     formError.value = '';
     showProductModal.value = true;
 };
@@ -312,14 +331,40 @@ const closeProductModal = () => {
     resetProductForm();
 };
 
+const onImageChange = (event) => {
+    const files = event?.target?.files;
+    imageFile.value = files && files.length ? files[0] : null;
+};
+
+const buildProductPayload = () => {
+    const payload = new FormData();
+    if (productForm.value.category_id !== null && productForm.value.category_id !== '') {
+        payload.append('category_id', String(productForm.value.category_id));
+    }
+    payload.append('name', productForm.value.name || '');
+    payload.append('description', productForm.value.description || '');
+    payload.append('image_path', productForm.value.image_path || '');
+    payload.append('price', String(Number(productForm.value.price || 0)));
+    payload.append('cost_price', String(Number(productForm.value.cost_price || 0)));
+    payload.append('stock_quantity', String(Math.max(0, Number(productForm.value.stock_quantity || 0))));
+    payload.append('is_available', productForm.value.is_available ? '1' : '0');
+
+    if (imageFile.value) {
+        payload.append('image', imageFile.value);
+    }
+
+    return payload;
+};
+
 const submitProduct = async () => {
     saving.value = true;
     formError.value = '';
     try {
+        const payload = buildProductPayload();
         if (editingProductId.value) {
-            await api.patch(`/seller/products/${editingProductId.value}`, productForm.value);
+            await api.post(`/seller/products/${editingProductId.value}?_method=PATCH`, payload);
         } else {
-            await api.post('/seller/products', productForm.value);
+            await api.post('/seller/products', payload);
         }
 
         closeProductModal();
