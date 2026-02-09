@@ -44,6 +44,10 @@
             <button class="pill" @click="openCreate">Add Food Item</button>
         </div>
 
+        <div v-if="lowStockProducts.length > 0" class="inventory-alert">
+            Low stock alert: {{ lowStockProducts.length }} item(s) are below 10 units. Update stock to avoid order issues.
+        </div>
+
         <div v-if="loadingProducts" class="login-subtitle">Loading menu...</div>
         <div v-else-if="error" class="login-subtitle">{{ error }}</div>
         <div v-else-if="products.length === 0" class="login-subtitle">No products yet.</div>
@@ -55,6 +59,7 @@
                     <th>Category</th>
                     <th>Price</th>
                     <th>Cost</th>
+                    <th>Stock Qty</th>
                     <th>In Stock</th>
                     <th>Action</th>
                 </tr>
@@ -65,6 +70,17 @@
                     <td>{{ product.category?.name || '-' }}</td>
                     <td>BDT {{ Number(product.price || 0).toFixed(2) }}</td>
                     <td>BDT {{ Number(product.cost_price || 0).toFixed(2) }}</td>
+                    <td>
+                        <span
+                            class="stock-badge"
+                            :class="{
+                                low: getStockQuantity(product) !== null && getStockQuantity(product) < 10,
+                                empty: getStockQuantity(product) !== null && getStockQuantity(product) === 0,
+                            }"
+                        >
+                            {{ getStockQuantity(product) === null ? 'N/A' : getStockQuantity(product) }}
+                        </span>
+                    </td>
                     <td>{{ product.is_available ? 'Yes' : 'No' }}</td>
                     <td class="actions-cell">
                         <button class="pill outline" @click="openEdit(product)">Edit</button>
@@ -106,6 +122,10 @@
                     <div class="field">
                         <label>Cost Price</label>
                         <input v-model.number="productForm.cost_price" type="number" min="0" step="0.01" />
+                    </div>
+                    <div class="field">
+                        <label>Stock Quantity</label>
+                        <input v-model.number="productForm.stock_quantity" type="number" min="0" step="1" required />
                     </div>
                     <div class="field">
                         <label>In Stock</label>
@@ -173,6 +193,7 @@ const showProductModal = ref(false);
 const showCategoryModal = ref(false);
 const editingProductId = ref(null);
 const editingCategoryId = ref(null);
+const lowStockThreshold = 10;
 
 const productForm = ref({
     category_id: null,
@@ -180,6 +201,7 @@ const productForm = ref({
     description: '',
     price: 0,
     cost_price: 0,
+    stock_quantity: 0,
     is_available: true,
 });
 
@@ -189,6 +211,16 @@ const categoryForm = ref({
 });
 
 const activeCategories = computed(() => categories.value.filter((category) => category.is_active));
+const getStockQuantity = (product) => {
+    const quantity = Number(product?.stock_quantity);
+    return Number.isFinite(quantity) ? quantity : null;
+};
+const lowStockProducts = computed(() =>
+    products.value.filter((product) => {
+        const quantity = getStockQuantity(product);
+        return quantity !== null && quantity < lowStockThreshold;
+    }),
+);
 
 const extractErrorMessage = (err, fallback) => {
     const responseData = err?.response?.data;
@@ -214,6 +246,7 @@ const resetProductForm = () => {
         description: '',
         price: 0,
         cost_price: 0,
+        stock_quantity: 0,
         is_available: true,
     };
     formError.value = '';
@@ -266,6 +299,7 @@ const openEdit = (product) => {
         description: product.description || '',
         price: Number(product.price || 0),
         cost_price: Number(product.cost_price || 0),
+        stock_quantity: Number(product.stock_quantity || 0),
         is_available: Boolean(product.is_available),
     };
     formError.value = '';

@@ -16,12 +16,14 @@ class Product extends Model
         'description',
         'price',
         'cost_price',
+        'stock_quantity',
         'is_available',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'cost_price' => 'decimal:2',
+        'stock_quantity' => 'integer',
         'is_available' => 'boolean',
     ];
 

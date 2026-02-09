@@ -382,6 +382,40 @@ body {
     margin-bottom: 12px;
 }
 
+.inventory-alert {
+    margin-bottom: 12px;
+    border: 1px solid #f0c27b;
+    background: #fff4e6;
+    color: #7f4f11;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.stock-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #e6f5ed;
+    color: #1f6b3b;
+}
+
+.stock-badge.low {
+    background: #fff2e0;
+    color: #915610;
+}
+
+.stock-badge.empty {
+    background: #fde9e8;
+    color: #a6302a;
+}
+
 .filters {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

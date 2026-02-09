@@ -20,6 +20,10 @@
             <div class="card-title">Average Rating</div>
             <div class="card-value">{{ stats.average_rating }}</div>
         </div>
+        <div class="card">
+            <div class="card-title">Low Stock Items (&lt;10)</div>
+            <div class="card-value">{{ stats.low_stock_count }}</div>
+        </div>
     </div>
 
     <div class="card">
@@ -54,6 +58,37 @@
             </tbody>
         </table>
     </div>
+
+    <div class="card">
+        <div class="section-title">Inventory Alerts</div>
+
+        <div class="actions-row">
+            <router-link class="pill" to="/seller/menu">Open Menu & Stock</router-link>
+        </div>
+
+        <div v-if="loading" class="login-subtitle">Loading inventory alerts...</div>
+        <div v-else-if="error" class="login-subtitle">{{ error }}</div>
+        <div v-else-if="stats.low_stock_items.length === 0" class="login-subtitle">
+            Inventory looks good. No item is below 10 units.
+        </div>
+
+        <table v-else class="table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Stock Qty</th>
+                    <th>Availability</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="item in stats.low_stock_items" :key="item.id">
+                    <td>{{ item.name }}</td>
+                    <td>{{ Number(item.stock_quantity || 0) }}</td>
+                    <td>{{ item.is_available ? 'Active' : 'Out of stock' }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </template>
 
 <script setup>
@@ -68,6 +103,8 @@ const stats = ref({
     pending_orders: 0,
     active_orders: 0,
     average_rating: 0,
+    low_stock_count: 0,
+    low_stock_items: [],
     new_orders: [],
 });
 
@@ -82,6 +119,8 @@ const fetchDashboard = async () => {
         stats.value = {
             ...stats.value,
             ...response.data,
+            low_stock_count: Number(response.data?.low_stock_count || 0),
+            low_stock_items: response.data?.low_stock_items || [],
             new_orders: response.data?.new_orders || [],
         };
     } catch (err) {

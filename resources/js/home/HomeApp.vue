@@ -9,8 +9,13 @@
                 <a href="#categories">Categories</a>
                 <a href="#sellers">Sellers</a>
                 <a href="#menu">Menu</a>
+<<<<<<< HEAD
                 <a :href="links.customerLogin">Customer Login</a>
                 <a :href="links.sellerRegister">Become a Seller</a>
+=======
+                <a href="/customer/login">Customer Login</a>
+                <a href="/register-seller">Become a Seller</a>
+>>>>>>> 39c270f7ab5ef356162abcb039d5201843c83127
             </nav>
             <a class="btn solid" :href="links.adminPanel">Admin</a>
         </header>
@@ -208,8 +213,13 @@
                 <a href="#categories">Categories</a>
                 <a href="#sellers">Sellers</a>
                 <a href="#menu">Menu</a>
+<<<<<<< HEAD
                 <a :href="links.customerRegister">Customer Register</a>
                 <a :href="links.sellerRegister">Seller Registration</a>
+=======
+                <a href="/customer/register">Customer Register</a>
+                <a href="/register-seller">Seller Registration</a>
+>>>>>>> 39c270f7ab5ef356162abcb039d5201843c83127
             </div>
 
             <div class="footer-apps">

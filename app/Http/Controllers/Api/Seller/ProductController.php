@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ProductCategory;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class ProductController extends Controller
 {
@@ -38,6 +39,7 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
             'cost_price' => ['nullable', 'numeric', 'min:0'],
+            'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'is_available' => ['nullable', 'boolean'],
         ]);
 
@@ -54,15 +56,24 @@ class ProductController extends Controller
             }
         }
 
-        $product = Product::create([
+        $hasStockQuantityColumn = Schema::hasColumn('products', 'stock_quantity');
+        $stockQuantity = (int) ($data['stock_quantity'] ?? 0);
+
+        $payload = [
             'seller_id' => $seller->id,
             'category_id' => $data['category_id'] ?? null,
             'name' => $data['name'],
             'description' => $data['description'] ?? null,
             'price' => $data['price'],
             'cost_price' => $data['cost_price'] ?? 0,
-            'is_available' => $data['is_available'] ?? true,
-        ]);
+            'is_available' => array_key_exists('is_available', $data) ? (bool) $data['is_available'] : $stockQuantity > 0,
+        ];
+
+        if ($hasStockQuantityColumn) {
+            $payload['stock_quantity'] = $stockQuantity;
+        }
+
+        $product = Product::create($payload);
 
         return response()->json(['product' => $product->load('category')], 201);
     }
@@ -81,6 +92,7 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'price' => ['sometimes', 'numeric', 'min:0'],
             'cost_price' => ['sometimes', 'numeric', 'min:0'],
+            'stock_quantity' => ['sometimes', 'integer', 'min:0'],
             'is_available' => ['sometimes', 'boolean'],
         ]);
 
@@ -95,6 +107,16 @@ class ProductController extends Controller
             if (! $categoryAllowed) {
                 return response()->json(['message' => 'Invalid category for this seller.'], 422);
             }
+        }
+
+        $hasStockQuantityColumn = Schema::hasColumn('products', 'stock_quantity');
+
+        if (array_key_exists('stock_quantity', $data) && ! array_key_exists('is_available', $data)) {
+            $data['is_available'] = (int) $data['stock_quantity'] > 0;
+        }
+
+        if (! $hasStockQuantityColumn) {
+            unset($data['stock_quantity']);
         }
 
         $product->update($data);

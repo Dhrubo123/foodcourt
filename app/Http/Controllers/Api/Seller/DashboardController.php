@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\Seller;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
 use App\Models\Review;
 use App\Models\SellerOrder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -42,6 +44,28 @@ class DashboardController extends Controller
             ->where('seller_id', $seller->id)
             ->avg('rating'), 2);
 
+        $lowStockCount = 0;
+        $lowStockItems = collect();
+        if (Schema::hasColumn('products', 'stock_quantity')) {
+            $lowStockCount = Product::query()
+                ->where('seller_id', $seller->id)
+                ->where('stock_quantity', '<', 10)
+                ->count();
+
+            $lowStockItems = Product::query()
+                ->where('seller_id', $seller->id)
+                ->where('stock_quantity', '<', 10)
+                ->orderBy('stock_quantity')
+                ->orderBy('name')
+                ->limit(8)
+                ->get([
+                    'id',
+                    'name',
+                    'stock_quantity',
+                    'is_available',
+                ]);
+        }
+
         $newOrders = SellerOrder::query()
             ->with([
                 'order.customer:id,name,phone',
@@ -73,8 +97,9 @@ class DashboardController extends Controller
             'pending_orders' => $pendingOrders,
             'active_orders' => $activeOrders,
             'average_rating' => $averageRating,
+            'low_stock_count' => $lowStockCount,
+            'low_stock_items' => $lowStockItems,
             'new_orders' => $newOrders,
         ]);
     }
 }
-
