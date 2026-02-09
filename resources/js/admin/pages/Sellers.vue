@@ -139,6 +139,10 @@
                         <input v-model="form.address" type="text" />
                     </div>
                     <div class="field">
+                        <label>Area Name</label>
+                        <input v-model="form.area_name" type="text" placeholder="e.g. Dhanmondi" />
+                    </div>
+                    <div class="field">
                         <label>Latitude</label>
                         <input v-model="form.lat" type="number" step="0.000001" />
                     </div>
@@ -220,6 +224,7 @@ const form = ref({
     type: 'cart',
     phone: '',
     address: '',
+    area_name: '',
     lat: '',
     lng: '',
     open_time: '',
@@ -290,6 +295,7 @@ const resetForm = () => {
         type: 'cart',
         phone: '',
         address: '',
+        area_name: '',
         lat: '',
         lng: '',
         open_time: '',
@@ -324,6 +330,7 @@ const openEdit = (seller) => {
         type: seller.type || 'cart',
         phone: seller.phone || '',
         address: seller.address || '',
+        area_name: seller.area?.name || '',
         lat: seller.lat ?? '',
         lng: seller.lng ?? '',
         open_time: seller.open_time || '',
@@ -367,6 +374,7 @@ const submit = async () => {
                 name: form.value.name,
                 phone: form.value.phone || null,
                 address: form.value.address || null,
+                area_name: form.value.area_name || null,
                 lat: form.value.lat === '' ? null : form.value.lat,
                 lng: form.value.lng === '' ? null : form.value.lng,
                 open_time: form.value.open_time || null,

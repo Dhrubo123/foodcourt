@@ -59,7 +59,23 @@ class DashboardController extends Controller
             ->with('area:id,name')
             ->orderByDesc('id')
             ->limit(5)
-            ->get(['id', 'name', 'type', 'area_id', 'is_approved', 'is_blocked']);
+            ->get(['id', 'name', 'type', 'area_id', 'address', 'lat', 'lng', 'is_approved', 'is_blocked'])
+            ->map(function ($seller) {
+                $areaLabel = $seller->area?->name;
+                if (! $areaLabel && $seller->address) {
+                    $areaLabel = $seller->address;
+                }
+                if (! $areaLabel && $seller->lat !== null && $seller->lng !== null) {
+                    $areaLabel = 'Lat ' . $seller->lat . ', Lng ' . $seller->lng;
+                }
+                if (! $areaLabel) {
+                    $areaLabel = 'N/A';
+                }
+
+                $seller->area_label = $areaLabel;
+
+                return $seller;
+            });
 
         return response()->json([
             'active_sellers' => $activeSellers,

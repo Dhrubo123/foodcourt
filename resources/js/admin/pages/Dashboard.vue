@@ -46,7 +46,7 @@
                 <tr v-for="seller in stats.recent_sellers" :key="seller.id">
                     <td>{{ seller.name }}</td>
                     <td>{{ seller.type }}</td>
-                    <td>{{ seller.area?.name || 'N/A' }}</td>
+                    <td>{{ seller.area_label || seller.area?.name || 'N/A' }}</td>
                     <td>{{ sellerStatus(seller) }}</td>
                 </tr>
             </tbody>

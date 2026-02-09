@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Area;
 use App\Models\Seller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -87,6 +88,7 @@ class SellerController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'address' => ['nullable', 'string', 'max:255'],
             'area_id' => ['nullable', 'integer', 'exists:areas,id'],
+            'area_name' => ['nullable', 'string', 'max:120'],
             'lat' => ['nullable', 'numeric'],
             'lng' => ['nullable', 'numeric'],
             'open_time' => ['nullable', 'date_format:H:i'],
@@ -96,6 +98,14 @@ class SellerController extends Controller
         ]);
 
         $seller = DB::transaction(function () use ($data) {
+            $areaId = $data['area_id'] ?? null;
+            if (! $areaId && ! empty($data['area_name'])) {
+                $area = Area::query()->firstOrCreate([
+                    'name' => trim($data['area_name']),
+                ]);
+                $areaId = $area->id;
+            }
+
             $user = User::create([
                 'name' => $data['owner_name'],
                 'email' => $data['owner_email'] ?? null,
@@ -114,7 +124,7 @@ class SellerController extends Controller
                 'name' => $data['name'],
                 'phone' => $data['phone'] ?? null,
                 'address' => $data['address'] ?? null,
-                'area_id' => $data['area_id'] ?? null,
+                'area_id' => $areaId,
                 'lat' => $data['lat'] ?? null,
                 'lng' => $data['lng'] ?? null,
                 'open_time' => $data['open_time'] ?? null,
@@ -142,6 +152,7 @@ class SellerController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'address' => ['nullable', 'string', 'max:255'],
             'area_id' => ['nullable', 'integer', 'exists:areas,id'],
+            'area_name' => ['nullable', 'string', 'max:120'],
             'lat' => ['nullable', 'numeric'],
             'lng' => ['nullable', 'numeric'],
             'open_time' => ['nullable', 'date_format:H:i'],
@@ -150,6 +161,15 @@ class SellerController extends Controller
             'is_approved' => ['sometimes', 'boolean'],
             'is_blocked' => ['sometimes', 'boolean'],
         ]);
+
+        if (array_key_exists('area_name', $data) && ! empty($data['area_name']) && empty($data['area_id'])) {
+            $area = Area::query()->firstOrCreate([
+                'name' => trim($data['area_name']),
+            ]);
+            $data['area_id'] = $area->id;
+        }
+
+        unset($data['area_name']);
 
         $seller->update($data);
 
